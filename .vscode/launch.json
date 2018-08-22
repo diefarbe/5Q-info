@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "request": "attach",
+            "servertype": "openocd",
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/das.elf",
+            "name": "Debug (OpenOCD)",
+            "device": "STM32F401VB",
+            "configFiles": [
+                "/Users/bird/das/openocd.cfg"
+            ]
+        }
+    ]
+}
