@@ -1,17 +1,78 @@
 {
     "version": "0.2.0",
-    "configurations": [
+    "configurations": [{
+            "name": "GDB",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/hello_world/build/das.elf",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "arm-none-eabi-gdb",
+            "setupCommands": [{
+                    "description": "Connect to OpenOCD",
+                    "text": "-target-select remote localhost:3333",
+                    "ignoreFailures": false,
+                },
+                {
+                    "description": "load file",
+                    "text": "-file-exec-and-symbols ${workspaceRoot}/hello_world/build/das.elf",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Reset and Halt",
+                    "text": "-interpreter-exec console \"mon reset halt\"",
+                    "ignoreFailures": false,
+                },
+                {
+                    "description": "unlock bank 0",
+                    "text": "-interpreter-exec console \"mon stm32f2x unlock 0\"",
+                    "ignoreFailures": false,
+                },
+                {
+                    "description": "Flash device",
+                    "text": "-interpreter-exec console \"mon program ${workspaceRoot}/hello_world/build/das.bin 0x08000000\"",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Flush Registers",
+                    "text": "-interpreter-exec console \"flushregs\"",
+                    "ignoreFailures": false,
+                },
+                {
+                    "description": "Entry Breakpoint",
+                    "text": "-interpreter-exec console \"thb main\"",
+                    "ignoreFailures": false,
+                },
+                {
+                    "description": "Reset and Halt",
+                    "text": "-interpreter-exec console \"mon reset init\"",
+                    "ignoreFailures": false,
+                },
+            ],
+            "logging": {
+                "moduleLoad": true,
+                "trace": true,
+                "engineLogging": true,
+                "programOutput": true,
+                "exceptions": false
+            }
+        },
         {
             "type": "cortex-debug",
             "request": "attach",
             "servertype": "openocd",
             "cwd": "${workspaceRoot}",
-            "executable": "./build/das.elf",
+            "executable": "./hello_world/build/das.elf",
             "name": "Debug (OpenOCD)",
             "device": "STM32F401VB",
+            "svdFile": "STM32F401.svd",
             "configFiles": [
-                "/Users/bird/das/openocd.cfg"
-            ]
+                "openocd.cfg"
+            ],
         }
     ]
 }
