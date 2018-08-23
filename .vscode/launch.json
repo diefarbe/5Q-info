@@ -58,7 +58,7 @@
                 "trace": true,
                 "engineLogging": true,
                 "programOutput": true,
-                "exceptions": false
+                "exceptions": true
             }
         },
         {
