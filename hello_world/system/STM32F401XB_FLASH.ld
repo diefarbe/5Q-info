@@ -113,6 +113,7 @@ SECTIONS
         KEEP(*(.fini_array))
         PROVIDE_HIDDEN (__fini_array_end = .);
 
+        KEEP(*(.got*))
         KEEP(*(.jcr*))
         . = ALIGN(4);
         /* All data end */
