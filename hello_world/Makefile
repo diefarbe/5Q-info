@@ -14,7 +14,7 @@ export SZ = arm-none-eabi-size
 #linker flags
 export LDFLAGS = -mcpu=cortex-m4 -DSTM32F401xC -mlittle-endian -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard -static -Wl,--gc-sections
 #compiler flags
-export CFLAGS = -mcpu=cortex-m4 -DSTM32F401xC -mlittle-endian -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fno-common -ffunction-sections -fdata-sections -Wall -Og -g -c
+export CFLAGS = -mcpu=cortex-m4 -DSTM32F401xC -mlittle-endian -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fno-common -fno-stack-protector -ffunction-sections -fdata-sections -Wall -Og -g -c
 
 ###################################################
 
