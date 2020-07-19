@@ -53,6 +53,7 @@ SRC = startup_stm32f401xc.s system_stm32f4xx.c stm32f4xx_it.c
 
 #user source files
 SRC += main.c
+SRC += tim.c
 
 SRC += stm32f4xx_hal.c \
  stm32f4xx_hal_adc.c  \

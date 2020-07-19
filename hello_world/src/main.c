@@ -1,6 +1,9 @@
 #include <stdint.h>
 #include <stm32f4xx.h>
 
+#include "error.h"
+#include "tim.h"
+
 /**
   * @brief  This function is executed in case of error occurrence.
   * @param  None
@@ -187,6 +190,13 @@ int main()
 	HAL_Init();
 	SystemClock_Config();
 	GPIO_Setup();
+	TIM_Setup_TIM1();
+	TIM_Setup_TIM2();
+	TIM_Setup_TIM3();
+	TIM_Setup_TIM4();
+	TIM_Setup_TIM10();
+	TIM_Setup_TIM11();
+	TIM_Setup_TIM9();
 
 	/* Blink the LED on Servo0 Pin */
 	while (1)
