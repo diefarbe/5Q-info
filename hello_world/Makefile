@@ -62,7 +62,9 @@ SRC += syscalls.c
 
 #user source files
 SRC += main.c
+SRC += dma.c
 SRC += tim.c
+SRC += spi.c
 SRC += usb.c
 SRC += usbd_conf.c
 SRC += usbd_desc.c

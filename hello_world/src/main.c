@@ -2,7 +2,9 @@
 #include <stm32f4xx.h>
 
 #include "error.h"
+#include "dma.h"
 #include "tim.h"
+#include "spi.h"
 #include "usb.h"
 
 /**
@@ -191,6 +193,7 @@ int main()
 	HAL_Init();
 	SystemClock_Config();
 	GPIO_Setup();
+	DMA_Setup();
 	TIM_Setup_TIM1();
 	TIM_Setup_TIM2();
 	TIM_Setup_TIM3();
@@ -198,6 +201,7 @@ int main()
 	TIM_Setup_TIM10();
 	TIM_Setup_TIM11();
 	USB_Setup_USB();
+	SPI_Setup_SPI2();
 	TIM_Setup_TIM9();
 
 	/* Blink the LED on Servo0 Pin */
