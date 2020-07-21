@@ -5,3 +5,11 @@ extern void TIM_Setup_TIM4(void);
 extern void TIM_Setup_TIM9(void);
 extern void TIM_Setup_TIM10(void);
 extern void TIM_Setup_TIM11(void);
+
+extern TIM_HandleTypeDef TIM_HandleStruct_TIM1;
+extern TIM_HandleTypeDef TIM_HandleStruct_TIM2;
+extern TIM_HandleTypeDef TIM_HandleStruct_TIM3;
+extern TIM_HandleTypeDef TIM_HandleStruct_TIM4;
+extern TIM_HandleTypeDef TIM_HandleStruct_TIM9;
+extern TIM_HandleTypeDef TIM_HandleStruct_TIM10;
+extern TIM_HandleTypeDef TIM_HandleStruct_TIM11;

@@ -5,6 +5,7 @@
 #include "dma.h"
 #include "tim.h"
 #include "spi.h"
+#include "led.h"
 #include "usb.h"
 
 /**
@@ -204,10 +205,15 @@ int main()
 	SPI_Setup_SPI2();
 	TIM_Setup_TIM9();
 
-	/* Blink the LED on Servo0 Pin */
+	LED_Start();
+
+	/* Blink the LED on the brighness adjustment key */
 	while (1)
 	{
-		HAL_Delay(100);
+		HAL_Delay(200);
+		LED_Set_LED(13, 8, 0x2800, 0x2800, 0x2800);
+		HAL_Delay(200);
+		LED_Set_LED(13, 8, 0, 0, 0);
 	}
 
 	return 0;

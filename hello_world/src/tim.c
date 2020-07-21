@@ -3,6 +3,7 @@
 
 #include "error.h"
 #include "tim.h"
+#include "led.h"
 
 TIM_HandleTypeDef TIM_HandleStruct_TIM1;
 TIM_HandleTypeDef TIM_HandleStruct_TIM2;
@@ -20,6 +21,7 @@ void TIM1_UP_TIM10_IRQHandler(void)
 {
 	if (__HAL_TIM_GET_FLAG(&TIM_HandleStruct_TIM10, TIM_FLAG_UPDATE) != RESET) {
 		__HAL_TIM_CLEAR_IT(&TIM_HandleStruct_TIM10, TIM_IT_UPDATE);
+		LED_IRQHandler();
 	} else {
 		HAL_TIM_IRQHandler(&TIM_HandleStruct_TIM1);
 		HAL_TIM_IRQHandler(&TIM_HandleStruct_TIM10);
