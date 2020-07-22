@@ -211,9 +211,9 @@ int main()
 	while (1)
 	{
 		HAL_Delay(200);
-		LED_Set_LED(13, 8, 0x2800, 0x2800, 0x2800);
+		LED_Set_LED_RGB(13, 8, 0x2800, 0x2800, 0x2800);
 		HAL_Delay(200);
-		LED_Set_LED(13, 8, 0, 0, 0);
+		LED_Set_LED_RGB(13, 8, 0, 0, 0);
 	}
 
 	return 0;

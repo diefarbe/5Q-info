@@ -18,6 +18,19 @@ static uint16_t LED_Status_Readback[17];
 static uint16_t LED_Start_Buffer[16];
 
 
+static const uint8_t LED_RGB_Map[9][16] = {
+	{ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 },
+	{ 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1 },
+	{ 2,2,2,1,0,0,0,0,0,0,0,0,2,2,1,1 },
+	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1 },
+	{ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+	{ 1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2 },
+	{ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 },
+};
+
+
 /**
 * @brief This function is ran at the TIM10 update interrupt
 */
@@ -290,5 +303,28 @@ void LED_Set_LED(unsigned row, unsigned col, uint16_t c0, uint16_t c1, uint16_t 
 		LED_Update_Buffer[0][(row<<4)+col+7] = c0;
 		LED_Update_Buffer[1][(row<<4)+col+7] = c1;
 		LED_Update_Buffer[2][(row<<4)+col+7] = c2;
+	}
+}
+
+void LED_Set_LED_RGB(unsigned row, unsigned col, uint16_t r, uint16_t g, uint16_t b)
+{
+	if (row < 16 && col < 9) {
+		switch(LED_RGB_Map[col][row]) {
+		case 0:
+			LED_Update_Buffer[0][(row<<4)+col+7] = r;
+			LED_Update_Buffer[1][(row<<4)+col+7] = g;
+			LED_Update_Buffer[2][(row<<4)+col+7] = b;
+			break;
+		case 1:
+			LED_Update_Buffer[0][(row<<4)+col+7] = b;
+			LED_Update_Buffer[1][(row<<4)+col+7] = r;
+			LED_Update_Buffer[2][(row<<4)+col+7] = g;
+			break;
+		case 2:
+			LED_Update_Buffer[0][(row<<4)+col+7] = g;
+			LED_Update_Buffer[1][(row<<4)+col+7] = b;
+			LED_Update_Buffer[2][(row<<4)+col+7] = r;
+			break;
+		}
 	}
 }
