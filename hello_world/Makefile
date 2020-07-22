@@ -36,9 +36,17 @@ OBJDIR := build/obj
 HALINC := STM32F4xx_HAL_Driver/Inc
 HALSRC := STM32F4xx_HAL_Driver/Src
 
+USBDCOREINC := STM32_USB_Device_Library/Core/Inc
+USBDCORESRC := STM32_USB_Device_Library/Core/Src
+
+USBDHIDINC := STM32_USB_Device_Library/Class/HID/Inc
+USBDHIDSRC := STM32_USB_Device_Library/Class/HID/Src
+
 #include directories
 CFLAGS += -I$(SYSTEMDIR)
 CFLAGS += -I$(HALINC)
+CFLAGS += -I$(USBDCOREINC)
+CFLAGS += -I$(USBDHIDINC)
 
 
 #linker file
@@ -50,10 +58,14 @@ LDFLAGS += -lm #math
 
 #system source files
 SRC = startup_stm32f401xc.s system_stm32f4xx.c stm32f4xx_it.c
+SRC += syscalls.c
 
 #user source files
 SRC += main.c
 SRC += tim.c
+SRC += usb.c
+SRC += usbd_conf.c
+SRC += usbd_desc.c
 
 SRC += stm32f4xx_hal.c \
  stm32f4xx_hal_adc.c  \
@@ -75,7 +87,14 @@ SRC += stm32f4xx_hal.c \
  stm32f4xx_hal_tim.c \
  stm32f4xx_hal_tim_ex.c \
  stm32f4xx_hal_cortex.c \
- stm32f4xx_hal_pcd.c
+ stm32f4xx_hal_pcd.c \
+ stm32f4xx_hal_pcd_ex.c \
+ stm32f4xx_ll_usb.c
+
+SRC += usbd_core.c \
+ usbd_ctlreq.c \
+ usbd_ioreq.c \
+ usbd_hid.c
 
 #object files (with build dir --> $(OBJDIR)/name.o)
 OBJS = $(addprefix $(OBJDIR)/,$(subst .c,.o,$(subst .s,.o,$(SRC))))
@@ -137,6 +156,16 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 
 #compile user .c file to .o
 $(OBJDIR)/%.o: $(HALSRC)/%.c | $(OBJDIR)
+	@echo compiling $@ from $<
+	@$(CC) $(CFLAGS) -o $@ $<
+
+#compile user .c file to .o
+$(OBJDIR)/%.o: $(USBDCORESRC)/%.c | $(OBJDIR)
+	@echo compiling $@ from $<
+	@$(CC) $(CFLAGS) -o $@ $<
+
+#compile user .c file to .o
+$(OBJDIR)/%.o: $(USBDHIDSRC)/%.c | $(OBJDIR)
 	@echo compiling $@ from $<
 	@$(CC) $(CFLAGS) -o $@ $<
 

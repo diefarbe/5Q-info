@@ -3,6 +3,7 @@
 
 #include "error.h"
 #include "tim.h"
+#include "usb.h"
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -196,6 +197,7 @@ int main()
 	TIM_Setup_TIM4();
 	TIM_Setup_TIM10();
 	TIM_Setup_TIM11();
+	USB_Setup_USB();
 	TIM_Setup_TIM9();
 
 	/* Blink the LED on Servo0 Pin */
