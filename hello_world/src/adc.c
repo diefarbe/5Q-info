@@ -9,13 +9,30 @@
 static uint8_t ADC_Column;
 static int16_t ADC_Readback_Buffer[12];
 
+int16_t ADC_ExtraChannels[14];
+
 ADC_HandleTypeDef ADC_HandleStruct;
+
+static uint8_t ADC_ExtraChannelId[14] = {
+  ADC_CHANNEL_11, ADC_CHANNEL_12, ADC_CHANNEL_13,
+  ADC_CHANNEL_11, ADC_CHANNEL_12, ADC_CHANNEL_13,
+  ADC_CHANNEL_15, ADC_CHANNEL_14, ADC_CHANNEL_15, ADC_CHANNEL_14,
+  ADC_CHANNEL_15, ADC_CHANNEL_14, ADC_CHANNEL_15, ADC_CHANNEL_14,
+};
+
+static uint8_t ADC_ExtraChannelMux[14] = {
+  0, 0, 0,
+  0, 0, 0,
+  0, 0, 1, 1,
+  2, 2, 3, 3,
+};
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
   int i;
   uint16_t mask = 0;
   int16_t cutoff = ADC_Readback_Buffer[0];
+  ADC_ExtraChannels[ADC_Column] = ADC_Readback_Buffer[11];
   for (i=2; i<11; i++) {
     mask >>= 1;
     if (ADC_Readback_Buffer[i] < cutoff)
@@ -130,8 +147,20 @@ extern void ADC_Setup_ADC(void)
 
 extern void ADC_Start(uint8_t column)
 {
+  ADC_ChannelConfTypeDef ADC_ChannelConfigStruct;
+
   ADC_Column = column;
+
   GPIOD->ODR = ~(GPIO_PIN_2 << column);
   LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_9);
+  uint8_t mux = ADC_ExtraChannelMux[column];
+  LL_GPIO_ResetOutputPin(GPIOE, mux^3);
+  LL_GPIO_SetOutputPin(GPIOE, mux);
+
+  ADC_ChannelConfigStruct.Channel = ADC_ExtraChannelId[column];
+  ADC_ChannelConfigStruct.Rank = 12;
+  ADC_ChannelConfigStruct.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  ADC_ChannelConfigStruct.Offset = 0;
+  HAL_ADC_ConfigChannel(&ADC_HandleStruct, &ADC_ChannelConfigStruct);
   HAL_ADC_Start_DMA(&ADC_HandleStruct, (uint32_t *)ADC_Readback_Buffer, 12);
 }

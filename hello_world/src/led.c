@@ -9,6 +9,7 @@
 #include "led.h"
 #include "tim.h"
 #include "spi.h"
+#include "adc.h"
 
 static uint16_t LED_Mode;
 static uint16_t LED_Update_Page;
@@ -221,8 +222,8 @@ void LED_Start(void)
 
 	LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_2);
 
-	HAL_Delay(500); /* Should wait for ADC1 CH15.2 > 2500 here (power good?),
-			   but for now just sleep a bit instead... */
+	while (ADC_ExtraChannels[ADC_EXTRACHANNEL_15_2] <= 2500)
+	       HAL_Delay(1);
 
 	for (duty = 0; duty <= old_duty; duty++) {
 		HAL_Delay(10);
