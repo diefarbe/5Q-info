@@ -63,6 +63,7 @@ SRC += syscalls.c
 #user source files
 SRC += main.c
 SRC += dma.c
+SRC += adc.c
 SRC += tim.c
 SRC += spi.c
 SRC += led.c

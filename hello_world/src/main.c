@@ -3,10 +3,12 @@
 
 #include "error.h"
 #include "dma.h"
+#include "adc.h"
 #include "tim.h"
 #include "spi.h"
 #include "led.h"
 #include "usb.h"
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -189,12 +191,46 @@ void GPIO_Setup(void)
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct); /* PE0-PE1 */
 }
 
+static void KeyDown(unsigned row, unsigned column)
+{
+	LED_Set_Key_RGB(row, column, 0x1800, 0x1800, 0x1800);
+}
+
+static void KeyUp(unsigned row, unsigned column)
+{
+	LED_Set_Key_RGB(row, column, 0, 0, 0);
+}
+
+void ADC_MaskCallback(uint8_t column, uint16_t mask)
+{
+	static uint16_t LastKeyMask[14];
+
+	mask ^= LastKeyMask[column];
+
+	if (mask) {
+		int row;
+		uint16_t new_mask = LastKeyMask[column] ^ mask;
+		LastKeyMask[column] = new_mask;
+		for (row = 0; mask; row++) {
+			if ((mask & 1)) {
+				if ((new_mask & 1))
+					KeyDown(row, column);
+				else
+					KeyUp(row, column);
+			}
+			mask >>= 1;
+			new_mask >>= 1;
+		}
+	}
+}
+
 int main()
 {
 	HAL_Init();
 	SystemClock_Config();
 	GPIO_Setup();
 	DMA_Setup();
+	ADC_Setup_ADC();
 	TIM_Setup_TIM1();
 	TIM_Setup_TIM2();
 	TIM_Setup_TIM3();
@@ -204,6 +240,8 @@ int main()
 	USB_Setup_USB();
 	SPI_Setup_SPI2();
 	TIM_Setup_TIM9();
+
+	ADC_Start(0);
 
 	LED_Start();
 
