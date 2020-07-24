@@ -216,8 +216,9 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   PCD_HandleStruct.Init.low_power_enable = DISABLE;
   PCD_HandleStruct.Init.lpm_enable = DISABLE;
   PCD_HandleStruct.Init.battery_charging_enable = DISABLE;
-  PCD_HandleStruct.Init.vbus_sensing_enable = ENABLE;
+  PCD_HandleStruct.Init.vbus_sensing_enable = DISABLE;
   PCD_HandleStruct.Init.use_dedicated_ep1 = DISABLE;
+  PCD_HandleStruct.Init.use_external_vbus = ENABLE;
   /* Link The driver to the stack */
   PCD_HandleStruct.pData = pdev;
   pdev->pData = &PCD_HandleStruct;
