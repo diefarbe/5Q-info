@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stm32f4xx.h>
+#include <stm32f4xx_ll_tim.h>
 
 #include "error.h"
 #include "tim.h"
@@ -12,7 +13,6 @@ TIM_HandleTypeDef TIM_HandleStruct_TIM4;
 TIM_HandleTypeDef TIM_HandleStruct_TIM9;
 TIM_HandleTypeDef TIM_HandleStruct_TIM10;
 TIM_HandleTypeDef TIM_HandleStruct_TIM11;
-
 
 /**
 * @brief This function handles TIM1 update and TIM10 interrupts
@@ -34,6 +34,15 @@ void TIM1_UP_TIM10_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
 	HAL_TIM_IRQHandler(&TIM_HandleStruct_TIM3);
+}
+
+/**
+* @brief  Input Capture callback in non blocking mode
+*/
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim->Instance == TIM3)
+		TIM_EncoderCallback(LL_TIM_GetCounter(htim->Instance));
 }
 
 
@@ -365,4 +374,9 @@ void TIM_Setup_TIM11(void)
 	CHECK_HAL_RESULT(HAL_TIM_PWM_ConfigChannel(&TIM_HandleStruct_TIM11, &TIM_OC_InitStruct, TIM_CHANNEL_1));
 
 	TIM_Config_PWM_GPIO(&TIM_HandleStruct_TIM11);
+}
+
+void TIM_Start_Encoder(void)
+{
+	HAL_TIM_Encoder_Start_IT(&TIM_HandleStruct_TIM3, TIM_CHANNEL_1);
 }

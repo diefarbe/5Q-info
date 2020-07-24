@@ -224,6 +224,41 @@ void ADC_MaskCallback(uint8_t column, uint16_t mask)
 	}
 }
 
+void TIM_EncoderCallback(uint8_t value)
+{
+	unsigned hue = value * 6;
+	unsigned r = 0, g = 0, b = 0;
+	unsigned x = hue & 0x100? ~hue & 0xff : hue & 0xff;
+	switch (hue >> 8) {
+	case 0:
+		r = 0xff;
+		g = x;
+		break;
+	case 1:
+		r = x;
+		g = 0xff;
+		break;
+	case 2:
+		g = 0xff;
+		b = x;
+		break;
+	case 3:
+		g = x;
+		b = 0xff;
+		break;
+	case 4:
+		r = x;
+		b = 0xff;
+		break;
+	case 5:
+		r = 0xff;
+		b = x;
+		break;
+	}	
+	LED_Set_Key_RGB(9, 0, r<<5, g<<5, b<<5);
+}
+
+
 int main()
 {
 	HAL_Init();
@@ -242,8 +277,8 @@ int main()
 	TIM_Setup_TIM9();
 
 	ADC_Start(0);
-
 	LED_Start();
+	TIM_Start_Encoder();
 
 	/* Blink the LED on the brighness adjustment key */
 	while (1)

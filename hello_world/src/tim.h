@@ -5,6 +5,8 @@ extern void TIM_Setup_TIM4(void);
 extern void TIM_Setup_TIM9(void);
 extern void TIM_Setup_TIM10(void);
 extern void TIM_Setup_TIM11(void);
+extern void TIM_Start_Encoder(void);
+extern void TIM_EncoderCallback(uint8_t value);
 
 extern TIM_HandleTypeDef TIM_HandleStruct_TIM1;
 extern TIM_HandleTypeDef TIM_HandleStruct_TIM2;
