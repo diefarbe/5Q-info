@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 #include <stm32f4xx.h>
 
 #include "error.h"
@@ -9,6 +10,22 @@
 #include "led.h"
 #include "usb.h"
 
+
+static const uint8_t KeyCodes[9][14] = {
+	/* Row 0 omitted */
+	{ 0x3a, 0x29, 0x1f, 0x1e, 0x35, 0x14, 0x2b, 0x04, 0x39, 0x64, 0x1d, 0xe1, 0xe3, 0xe0 },
+	{ 0x3c, 0x3b, 0x20, 0x21, 0x08, 0x1a, 0x15, 0x16, 0x09, 0x07, 0x1b, 0x06, 0x8b, 0xe2 },
+	{ 0x3e, 0x3d, 0x24, 0x22, 0x23, 0x1c, 0x17, 0x0b, 0x0a, 0x05, 0x11, 0x19, 0x2c, 0x88 },
+	{ 0x3f, 0x40, 0x25, 0x26, 0x0c, 0x18, 0x12, 0x0d, 0x0f, 0x0e, 0x10, 0x37, 0x36, 0x8a },
+	{ 0x42, 0x41, 0x2e, 0x27, 0x2d, 0x2f, 0x13, 0x30, 0x33, 0x34, 0x32, 0x38, 0xe7, 0xe6 },
+	{ 0x43, 0x45, 0x89, 0x44, 0x2a, 0x49, 0x4c, 0x4d, 0x31, 0x28, 0xe5, 0x87, 0x65, 0xe4 },
+	{ 0x48, 0x46, 0x53, 0x47, 0x4b, 0x4a, 0x5f, 0x4e, 0x5c, 0x59, 0x52, 0x51, 0x4f, 0x50 },
+	{ 0x00, 0x00, 0xf1, 0xf0, 0x54, 0x61, 0x60, 0x5e, 0x5d, 0x5a, 0x5b, 0x62, 0x85, 0x63 },
+	{ 0xf3, 0x00, 0xf2, 0x00, 0x55, 0x56, 0x57, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x58 },
+};
+
+static uint8_t HIDReport[8];
+static bool HIDReportOverflow;
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -191,14 +208,69 @@ void GPIO_Setup(void)
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct); /* PE0-PE1 */
 }
 
+static bool AddKeyToReport(uint8_t kc)
+{
+	unsigned i;
+	for (i=2; i<8; i++) {
+		if (HIDReport[i] == kc)
+			return true;
+		else if(HIDReport[i] == 0) {
+			HIDReport[i] = kc;
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool RemoveKeyFromReport(uint8_t kc)
+{
+	unsigned i;
+	for (i=2; i<8; i++) {
+		if (HIDReport[i] == kc) {
+			while (i < 7) {
+				if (!(HIDReport[i] = HIDReport[i+1]))
+					break;
+				i++;
+			}
+			HIDReport[i] = 0;
+			return true;
+		}
+		else if(HIDReport[i] == 0)
+			break;
+	}
+	return false;
+}
+
 static void KeyDown(unsigned row, unsigned column)
 {
 	LED_Set_Key_RGB(row, column, 0x1800, 0x1800, 0x1800);
+	if (row != 0 && row < 10 && column < 14) {
+		uint8_t kc = KeyCodes[row-1][column];
+		if (!kc)
+			;
+		else if (kc < 0xe0) {
+			if (!AddKeyToReport(kc))
+				HIDReportOverflow = true;
+		} else if (kc < 0xe8) {
+			HIDReport[0] |= 1 << (kc & 7);
+		}
+	}
 }
 
 static void KeyUp(unsigned row, unsigned column)
 {
 	LED_Set_Key_RGB(row, column, 0, 0, 0);
+	if (row != 0 && row < 10 && column < 14) {
+		uint8_t kc = KeyCodes[row-1][column];
+		if (!kc)
+			;
+		else if (kc < 0xe0) {
+			if (RemoveKeyFromReport(kc))
+				HIDReportOverflow = false;
+		} else if (kc < 0xe8) {
+			HIDReport[0] &= ~(1 << (kc & 7));
+		}
+	}
 }
 
 void ADC_MaskCallback(uint8_t column, uint16_t mask)
@@ -221,6 +293,14 @@ void ADC_MaskCallback(uint8_t column, uint16_t mask)
 			mask >>= 1;
 			new_mask >>= 1;
 		}
+	}
+	if (column == 13) {
+		if (HIDReportOverflow) {
+			static uint8_t overflow_report[8] = "\0\0\1\1\1\1\1\1";
+			overflow_report[0] = HIDReport[0];
+			USB_HIDInReportSubmit(overflow_report);
+		} else
+			USB_HIDInReportSubmit(HIDReport);
 	}
 }
 
@@ -258,6 +338,18 @@ void TIM_EncoderCallback(uint8_t value)
 	LED_Set_Key_RGB(9, 0, r<<5, g<<5, b<<5);
 }
 
+void USB_HIDOutReportCallback(const uint8_t *report)
+{
+	static const uint8_t LED_row[4] = { 12, 10, 8, 13 };
+	unsigned i, mask = *report;
+	for (i=0; i<4; i++) {
+		if (mask & 1)
+			LED_Set_LED_RGB(LED_row[i], 6, 0x1800, 0x1800, 0x1800);
+		else
+			LED_Set_LED_RGB(LED_row[i], 6, 0, 0, 0);
+		mask >>= 1;
+	}
+}
 
 int main()
 {

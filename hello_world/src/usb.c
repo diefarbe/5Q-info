@@ -210,6 +210,11 @@ typedef struct {
 		MODE_CTLIN,
 		MODE_CTLIN_TRUNC,
 	} EP0_Mode;
+	enum {
+		REPORT_IDLE,
+		REPORT_BUSY,
+		REPORT_PENDING,
+	} ReportState;
 	uint16_t EP0_DataInLeft;
 	uint8_t Config, IdleDuration, Protocol;
 	uint8_t HIDReportIn[8];
@@ -300,7 +305,10 @@ static bool USB_HandleStdDevSetup(PCD_HandleTypeDef * hpcd)
 				state->Config = req->wValue;
 				if (state->Config) {
 					HAL_PCD_EP_Open(hpcd, 0x81, sizeof(state->HIDReportIn), EP_TYPE_INTR);
+					state->ReportState = REPORT_BUSY;
+					HAL_PCD_EP_Transmit(&PCD_HandleStruct, 1, state->HIDReportIn, sizeof(state->HIDReportIn));
 				} else {
+					state->ReportState = REPORT_PENDING;
 					HAL_PCD_EP_Close(hpcd, 0x81);
 				}
 			}
@@ -412,6 +420,7 @@ void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef * hpcd, uint8_t epnum)
 		USB_StateTypeDef *state = hpcd->pData;
 
 		if (state->EP0_Mode == MODE_CTLOUT) {
+			USB_HIDOutReportCallback(state->HIDReportOut);
 			state->EP0_Mode = MODE_NONE;
 			HAL_PCD_EP_Transmit(hpcd, 0, NULL, 0);
 		}
@@ -442,6 +451,19 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef * hpcd, uint8_t epnum)
 			HAL_PCD_EP_SetStall(hpcd, 0x80);
 			HAL_PCD_EP_Receive(hpcd, 0, NULL, 0);
 		}
+	} else if(epnum == 1 && state->ReportState != REPORT_IDLE) {
+		bool send_pkt = false;
+		uint32_t primask_bit = __get_PRIMASK();
+		__disable_irq();
+		if (state->ReportState == REPORT_PENDING) {
+			state->ReportState = REPORT_BUSY;
+			send_pkt = true;
+		} else if (state->ReportState == REPORT_BUSY)
+			state->ReportState = REPORT_IDLE;
+		__set_PRIMASK(primask_bit);
+		if (send_pkt) {
+			HAL_PCD_EP_Transmit(&PCD_HandleStruct, 1, state->HIDReportIn, sizeof(state->HIDReportIn));
+		}
 	}
 }
 
@@ -458,6 +480,7 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef * hpcd)
 	state->IdleDuration = 2;
 	state->Protocol = 1;
 	state->EP0_Mode = MODE_NONE;
+	state->ReportState = REPORT_PENDING;
 	HAL_PCD_EP_Open(hpcd, 0x00, 64, EP_TYPE_CTRL);
 	HAL_PCD_EP_Open(hpcd, 0x80, 64, EP_TYPE_CTRL);
 }
@@ -502,6 +525,30 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef * hpcd)
 		__HAL_RCC_USB_OTG_FS_CLK_ENABLE();
 		HAL_NVIC_SetPriority(OTG_FS_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+	}
+}
+
+void USB_HIDInReportSubmit(const uint8_t *report)
+{
+	USB_StateTypeDef *state = &USB_StateStruct;
+
+	if (!memcmp(state->HIDReportIn, report, sizeof(state->HIDReportIn)))
+		return;
+	memcpy(state->HIDReportIn, report, sizeof(state->HIDReportIn));
+	bool send_pkt = false;
+	uint32_t primask_bit = __get_PRIMASK();
+	__disable_irq();
+	if (state->Config) {
+		if (state->ReportState == REPORT_BUSY)
+			state->ReportState = REPORT_PENDING;
+		else if(state->ReportState == REPORT_IDLE) {
+			state->ReportState = REPORT_BUSY;
+			send_pkt = true;
+		}
+	}
+	__set_PRIMASK(primask_bit);
+	if (send_pkt) {
+		HAL_PCD_EP_Transmit(&PCD_HandleStruct, 1, state->HIDReportIn, sizeof(state->HIDReportIn));
 	}
 }
 
