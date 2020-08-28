@@ -148,6 +148,8 @@ const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
   * @{
   */
 
+extern int CheckShouldGoToDFU(void);
+
 /**
   * @brief  Setup the microcontroller system
   *         Initialize the FPU setting, vector table location and External memory 
@@ -157,6 +159,14 @@ const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
   */
 void SystemInit(void)
 {
+
+  if (CheckShouldGoToDFU()) {
+
+    __HAL_SYSCFG_REMAPMEMORY_SYSTEMFLASH();
+    __asm__("ldr sp,[%0,#0]; ldr lr,[%0,#4]; bx lr" : : "r"(0x1fff0000));
+
+  }
+
   /* FPU settings ------------------------------------------------------------*/
   #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
     SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */

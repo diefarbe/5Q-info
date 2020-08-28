@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stm32f4xx.h>
+#include <stm32f4xx_ll_rtc.h>
 
 #include "error.h"
 #include "dma.h"
@@ -26,6 +27,36 @@ static const uint8_t KeyCodes[9][14] = {
 
 static uint8_t HIDReport[8];
 static bool HIDReportOverflow;
+static bool F12_pressed = false;
+
+#define GO_TO_DFU_COOKIE 0xdf11f00d
+
+static void EnableRTCWrite(void)
+{
+  __HAL_RCC_PWR_CLK_ENABLE();
+  PWR->CR |= PWR_CR_DBP;
+  while((PWR->CR & PWR_CR_DBP) == RESET)
+    ;
+}
+
+int CheckShouldGoToDFU(void)
+{
+  uint32_t cookie = LL_RTC_BAK_GetRegister(RTC, LL_RTC_BKP_DR17);
+  if (cookie == GO_TO_DFU_COOKIE) {
+    EnableRTCWrite();
+    LL_RTC_BAK_SetRegister(RTC, LL_RTC_BKP_DR17, 0);
+    return 1;
+  }
+  return 0;
+}
+
+void GoToDFU(void)
+{
+  EnableRTCWrite();
+  LL_RTC_BAK_SetRegister(RTC, LL_RTC_BKP_DR17, GO_TO_DFU_COOKIE);
+  HAL_NVIC_SystemReset();
+}
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -283,6 +314,8 @@ void ADC_MaskCallback(uint8_t column, uint16_t mask)
 		int row;
 		uint16_t new_mask = LastKeyMask[column] ^ mask;
 		LastKeyMask[column] = new_mask;
+		if (column == 1)
+		  F12_pressed = (new_mask >> 6) & 1;
 		for (row = 0; mask; row++) {
 			if ((mask & 1)) {
 				if ((new_mask & 1))
@@ -371,6 +404,16 @@ int main()
 	ADC_Start(0);
 	LED_Start();
 	TIM_Start_Encoder();
+
+	HAL_Delay(20);
+	if (F12_pressed) {
+	  int r, c;
+	  for (r=0; r<16; r++)
+	    for(c=0; c<9; c++)
+	      LED_Set_LED_RGB(r, c, 0x1400, 0x0600, 0x0000);
+	  HAL_Delay(1000);
+	  GoToDFU();
+	}
 
 	/* Blink the LED on the brighness adjustment key */
 	while (1)
